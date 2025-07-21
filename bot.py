@@ -77,7 +77,7 @@ def handle_message(chat_id, text):
             send_message(chat_id, "❌ Invalid name. Use letters only (no numbers or symbols).")
 
     else:
-        send_message(chat_id, "🤖 Send /scrape to begin scraping.")
+        send_message(chat_id, f"🤖 Send /scrape to begin scraping. /n name : {user_data[chat_id]["name"]}")
 
 # Main polling loop
 def main():
