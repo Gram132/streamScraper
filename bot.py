@@ -2,6 +2,9 @@ import os
 import time
 import requests
 import re
+from downloader import cut_and_watermark_kick_video
+
+
 
 TOKEN = os.getenv("BOT_TOKEN")
 URL = f"https://api.telegram.org/bot{TOKEN}/"
@@ -19,7 +22,16 @@ def send_message(chat_id, text):
 def scrape_data(url, start, end, name):
     # Dummy function – replace this with your own logic
     print(f"Scraping from {url}, start='{start}', end='{end}', name='{name}'")
-    return f"✅ Scraping from {start} to {end} completed. Saved as: {name}"
+    cut_and_watermark_kick_video(
+        m3u8_url=url,
+        start_time=start,
+        end_time=end,
+        logo_path="./logo/logo.png",
+        streamer_name=name,
+        font_path="./font/Merriweather.ttf"
+    )
+
+    return f"✅ End Scraping ...."
 
 # Validation functions
 def is_valid_url(url):
@@ -69,6 +81,7 @@ def handle_message(chat_id, text):
         if is_valid_name(text):
             user_data[chat_id]["name"] = text
             data = user_data[chat_id]
+            send_message(f"✅ Scraping from {data['start']} to {data['end']} completed. Saved as: {data['name']}")
             result = scrape_data(data["url"], data["start"], data["end"], data["name"])
             send_message(chat_id, result)
             user_states.pop(chat_id)
@@ -77,7 +90,7 @@ def handle_message(chat_id, text):
             send_message(chat_id, "❌ Invalid name. Use letters only (no numbers or symbols).")
 
     else:
-        send_message(chat_id, f"🤖 Send /scrape to begin scraping.  name : { user_data[chat_id]["name"] } ..")
+        send_message(chat_id, f"🤖 Send /scrape to begin scraping...")
 
 # Main polling loop
 def main():
