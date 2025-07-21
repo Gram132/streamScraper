@@ -81,7 +81,8 @@ def handle_message(chat_id, text):
         if is_valid_name(text):
             user_data[chat_id]["name"] = text
             data = user_data[chat_id]
-            send_message(f"✅ Scraping from {data['start']} to {data['end']} completed. Saved as: {data['name']}")
+            send_message(chat_id, f"✅ Starting to scrape from {data['start']} to {data['end']}, saving as: {data['name']}")
+            
             result = scrape_data(data["url"], data["start"], data["end"], data["name"])
             send_message(chat_id, result)
             user_states.pop(chat_id)
