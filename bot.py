@@ -29,7 +29,8 @@ def is_valid_time_format(value):
     return re.match(r"^\d{2}:\d{2}:\d{2}$", value) is not None
 
 def is_valid_name(name):
-    return name.replace(" ", "").isalpha()
+    #return name.replace(" ", "").isalpha()
+    return True
 
 # Handle each incoming message
 def handle_message(chat_id, text):
