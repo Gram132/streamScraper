@@ -128,8 +128,9 @@ def handle_message(chat_id, text):
                 youtube_service = get_youtube_service()
 
                 try:
+
                     download_file_from_drive(drive_url, filename, drive_service)
-                    upload_video_to_youtube(filename, title, desc, youtube_service)
+                    #upload_video_to_youtube(filename, title, desc, youtube_service)
                     send_message(chat_id, "✅ Video uploaded to YouTube successfully!")
                 except Exception as e:
                     send_message(chat_id, f"❌ Error uploading video: {str(e)}")
