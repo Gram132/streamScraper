@@ -117,7 +117,7 @@ def handle_message(chat_id, text):
                 selected_video = videos[idx]
                 name = selected_video['name']
                 file_id = selected_video['id']
-                drive_url = f"https://drive.google.com/uc?id={file_id}/view"
+                drive_url = f"https://drive.google.com/file/d/{file_id}/view"
                 filename = "downloaded_video.mp4"
                 title = name
                 desc = f"Auto-uploaded video: {name}"
