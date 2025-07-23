@@ -53,6 +53,3 @@ def delete_all_videos_in_folder_and_trash(folder_id):
         print(f"Error emptying trash: {e}")
 
 
-
-FOLDER_ID = "1gz_hpSSr0f73scjkwAE5XfH1zSrj60sT"
-delete_all_videos_in_folder_and_trash(FOLDER_ID)
