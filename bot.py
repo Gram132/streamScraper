@@ -40,6 +40,21 @@ def is_valid_time_format(value):
 def is_valid_name(name):
     return True
 
+
+def safe_list_videos(folder_id, retries=5, delay=5):
+    for attempt in range(retries):
+        try:
+            return list_videos_in_folder(folder_id)
+        except Exception as e:
+            print(f"⚠️ Error listing videos (attempt {attempt+1}):", e)
+            time.sleep(delay)
+    raise Exception("❌ Failed to list videos after retries.")
+
+
+
+
+
+
 # ----- Handle Message -----
 def handle_message(chat_id, text):
     state = user_states.get(chat_id)
@@ -51,7 +66,7 @@ def handle_message(chat_id, text):
         send_message(chat_id, "📥 Listing videos, please wait...")
 
         FOLDER_ID = "1gz_hpSSr0f73scjkwAE5XfH1zSrj60sT"
-        videos = list_videos_in_folder(FOLDER_ID)
+        videos = safe_list_videos(FOLDER_ID)
 
         if not videos:
             send_message(chat_id, "❌ No videos found in the folder.")
@@ -103,6 +118,7 @@ def handle_message(chat_id, text):
             data = user_data[chat_id]
             send_message(chat_id, f"✅ Scraping from {data['start']} to {data['end']} as {data['name']}")
             result = scrape_data(data["url"], data["start"], data["end"], data["name"])
+            time.sleep(5) 
             send_message(chat_id, result)
             user_states.pop(chat_id, None)
             user_data.pop(chat_id, None)
