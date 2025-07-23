@@ -27,7 +27,7 @@ def seconds_to_hms(seconds):
 def cut_and_watermark_kick_video(m3u8_url, start_time, end_time, logo_path="logo.png", streamer_name="MoroccanStreamer123", font_path=""):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     raw_video = f"raw_kick_clip_{timestamp}.mp4"
-    final_video = f"kick_clip_{timestamp}.mp4"
+    final_video = f"{streamer_name}_kick_clip_{timestamp}.mp4"
 
     # Calculate duration
     start_seconds = hms_to_seconds(start_time)
