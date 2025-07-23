@@ -4,6 +4,7 @@ import requests
 import re
 from downloader import cut_and_watermark_kick_video
 from list_video_from_drive import list_videos_in_folder
+from post_on_youtube import get_drive_service, get_youtube_service, download_file_from_drive, upload_video_to_youtube
 
 TOKEN = os.getenv("BOT_TOKEN")
 URL = f"https://api.telegram.org/bot{TOKEN}/"
@@ -30,7 +31,6 @@ def scrape_data(url, start, end, name):
     )
     return "✅ Done scraping!"
 
-# ----- Validation Helpers -----
 def is_valid_url(url):
     return url.startswith("http://") or url.startswith("https://")
 
@@ -38,44 +38,48 @@ def is_valid_time_format(value):
     return re.match(r"^\d{2}:\d{2}:\d{2}$", value) is not None
 
 def is_valid_name(name):
-    return True  # You can customize further
+    return True
 
 # ----- Handle Message -----
 def handle_message(chat_id, text):
     state = user_states.get(chat_id)
 
     if text == "/listvideos":
-        user_states[chat_id] = "awaiting_listvideos"
+        user_states[chat_id] = "awaiting_selecting_video"
         user_data[chat_id] = {}
-        send_message(chat_id, "📥 Working on listing video files. Please wait...")
+
+        send_message(chat_id, "📥 Listing videos, please wait...")
 
         FOLDER_ID = "1gz_hpSSr0f73scjkwAE5XfH1zSrj60sT"
         videos = list_videos_in_folder(FOLDER_ID)
 
         if not videos:
-            send_message(chat_id, "❌ No video files found in the folder.")
+            send_message(chat_id, "❌ No videos found in the folder.")
         else:
-            for file in videos:
+            user_data[chat_id]["videos"] = videos
+            msg = ""
+            for idx, file in enumerate(videos, start=1):
                 name = file['name']
                 file_id = file['id']
                 url = f"https://drive.google.com/file/d/{file_id}/view"
-                send_message(chat_id, f"🎥 {name}\n🔗 {url}")
-        return  # Stop here to avoid falling through
+                msg += f"{idx}. 🎥 {name}\n🔗 {url}\n"
+            msg += f"\n📌 Reply with a number (1–{len(videos)}) to upload that video to YouTube."
+            send_message(chat_id, msg)
+        return
 
-    if text == "/scrape":
+    elif text == "/scrape":
         user_states[chat_id] = "awaiting_url"
         user_data[chat_id] = {}
         send_message(chat_id, "📥 Please send the URL to scrape:")
         return
 
-    # Handle flow based on state
     if state == "awaiting_url":
         if is_valid_url(text):
             user_data[chat_id]["url"] = text
             user_states[chat_id] = "awaiting_start"
             send_message(chat_id, "⏱️ Enter the start time (HH:MM:SS):")
         else:
-            send_message(chat_id, "❌ Invalid URL. It must start with http:// or https://")
+            send_message(chat_id, "❌ Invalid URL format.")
 
     elif state == "awaiting_start":
         if is_valid_time_format(text):
@@ -83,7 +87,7 @@ def handle_message(chat_id, text):
             user_states[chat_id] = "awaiting_end"
             send_message(chat_id, "⏱️ Enter the end time (HH:MM:SS):")
         else:
-            send_message(chat_id, "❌ Invalid time format. Use HH:MM:SS (e.g., 00:05:30).")
+            send_message(chat_id, "❌ Invalid format. Use HH:MM:SS.")
 
     elif state == "awaiting_end":
         if is_valid_time_format(text):
@@ -91,25 +95,54 @@ def handle_message(chat_id, text):
             user_states[chat_id] = "awaiting_name"
             send_message(chat_id, "💾 Enter a name to save the result:")
         else:
-            send_message(chat_id, "❌ Invalid time format. Use HH:MM:SS (e.g., 00:07:45).")
+            send_message(chat_id, "❌ Invalid time format.")
 
     elif state == "awaiting_name":
         if is_valid_name(text):
             user_data[chat_id]["name"] = text
             data = user_data[chat_id]
-
-            send_message(chat_id, f"✅ Starting to scrape from {data['start']} to {data['end']} as: {data['name']}")
+            send_message(chat_id, f"✅ Scraping from {data['start']} to {data['end']} as {data['name']}")
             result = scrape_data(data["url"], data["start"], data["end"], data["name"])
             send_message(chat_id, result)
-
-            # Cleanup
             user_states.pop(chat_id, None)
             user_data.pop(chat_id, None)
         else:
-            send_message(chat_id, "❌ Invalid name. Use letters only (no numbers or symbols).")
+            send_message(chat_id, "❌ Invalid name.")
+
+    elif state == "awaiting_selecting_video":
+        if text.isdigit():
+            idx = int(text) - 1
+            videos = user_data[chat_id].get("videos", [])
+            if 0 <= idx < len(videos):
+                selected_video = videos[idx]
+                name = selected_video['name']
+                file_id = selected_video['id']
+                drive_url = f"https://drive.google.com/uc?id={file_id}&export=download"
+                filename = "downloaded_video.mp4"
+                title = name
+                desc = f"Auto-uploaded video: {name}"
+
+                send_message(chat_id, f"📤 Downloading and uploading **{title}** to YouTube...")
+
+                drive_service = get_drive_service()
+                youtube_service = get_youtube_service()
+
+                try:
+                    download_file_from_drive(drive_url, filename, drive_service)
+                    upload_video_to_youtube(filename, title, desc, youtube_service)
+                    send_message(chat_id, "✅ Video uploaded to YouTube successfully!")
+                except Exception as e:
+                    send_message(chat_id, f"❌ Error uploading video: {str(e)}")
+
+                user_states.pop(chat_id, None)
+                user_data.pop(chat_id, None)
+            else:
+                send_message(chat_id, "❌ Invalid number. Please try again.")
+        else:
+            send_message(chat_id, "❌ Please send a number to select a video.")
 
     else:
-        send_message(chat_id, "🤖 Send /scrape to begin scraping or /listvideos to list videos.")
+        send_message(chat_id, "🤖 Send /scrape to scrape a clip or /listvideos to upload from Google Drive.")
 
 # ----- Main Bot Loop -----
 def main():
