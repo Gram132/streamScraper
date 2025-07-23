@@ -117,7 +117,7 @@ def handle_message(chat_id, text):
                 selected_video = videos[idx]
                 name = selected_video['name']
                 file_id = selected_video['id']
-                drive_url = f"https://drive.google.com/uc?id={file_id}&export=download"
+                drive_url = f"https://drive.google.com/uc?id={file_id}/view"
                 filename = "downloaded_video.mp4"
                 title = name
                 desc = f"Auto-uploaded video: {name}"
@@ -128,10 +128,6 @@ def handle_message(chat_id, text):
                 youtube_service = get_youtube_service()
 
                 try:
-                    send_message(chat_id, f"drive_url {drive_url} ")
-                    send_message(chat_id, f"filename {filename} ")
-                    send_message(chat_id, f"drive_service {drive_service}")
-                    
                     download_file_from_drive(drive_url, filename, drive_service)
                     #upload_video_to_youtube(filename, title, desc, youtube_service)
                     send_message(chat_id, "✅ Video uploaded to YouTube successfully!")
