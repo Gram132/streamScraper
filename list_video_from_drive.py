@@ -51,5 +51,3 @@ def delete_all_videos_in_folder_and_trash(folder_id):
         print("Trash emptied.")
     except Exception as e:
         print(f"Error emptying trash: {e}")
-
-
