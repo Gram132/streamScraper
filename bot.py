@@ -3,6 +3,7 @@ import time
 import requests
 import re
 from downloader import cut_and_watermark_kick_video
+from list_video_from_drive import list_videos_in_folder
 
 
 
@@ -48,6 +49,11 @@ def is_valid_name(name):
 def handle_message(chat_id, text):
     state = user_states.get(chat_id)
 
+    if text == "/listvideos":
+        user_states[chat_id] = "awaiting_listvideos"
+        user_data[chat_id] = {}
+        send_message(chat_id, "📥 Working on list video files . please wait.")
+        
     if text == "/scrape":
         user_states[chat_id] = "awaiting_url"
         user_data[chat_id] = {}
@@ -89,9 +95,23 @@ def handle_message(chat_id, text):
             user_data.pop(chat_id)
         else:
             send_message(chat_id, "❌ Invalid name. Use letters only (no numbers or symbols).")
-
+    
+    elif state == "awaiting_listvideos":
+        FOLDER_ID = "1gz_hpSSr0f73scjkwAE5XfH1zSrj60sT"
+        videos = list_videos_in_folder(FOLDER_ID)
+        
+        if not videos:
+            print("❌ No video files found in the folder.")
+        else:
+            print(f"📁 Found {len(videos)} video(s):\n")
+            for file in videos:
+                name = file['name']
+                file_id = file['id']
+                url = f"https://drive.google.com/file/d/{file_id}/view"
+                print(f"🎥 {name}\n🔗 {url}\n")
+                send_message(f"🎥 {name}\n🔗 {url}\n")
     else:
-        send_message(chat_id, f"🤖 Send /scrape to begin scraping...")
+        send_message(chat_id, f"🤖 Send /scrape to begin scraping or /listvideos to list all videos in the folder. ")
 
 # Main polling loop
 def main():
