@@ -3,7 +3,7 @@ import time
 import requests
 import re
 from downloader import cut_and_watermark_kick_video
-from list_video_from_drive import list_videos_in_folder
+from list_video_from_drive import list_videos_in_folder , delete_all_videos_in_folder_and_trash
 from post_on_youtube import get_drive_service, get_youtube_service, download_file_from_drive, upload_video_to_youtube
 
 TOKEN = os.getenv("BOT_TOKEN")
@@ -110,6 +110,7 @@ def handle_message(chat_id, text):
             send_message(chat_id, "❌ Invalid name.")
 
     elif state == "awaiting_selecting_video":
+        FOLDER_ID = "1gz_hpSSr0f73scjkwAE5XfH1zSrj60sT"
         if text.isdigit():
             idx = int(text) - 1
             videos = user_data[chat_id].get("videos", [])
@@ -130,7 +131,9 @@ def handle_message(chat_id, text):
                 try:
                     download_file_from_drive(drive_url, filename, drive_service)
                     upload_video_to_youtube(filename, title, desc, youtube_service)
+                    delete_all_videos_in_folder_and_trash(FOLDER_ID)
                     send_message(chat_id, "✅ Video uploaded to YouTube successfully!")
+                    send_message(chat_id, "📤 Folder is Empty Now")
                 except Exception as e:
                     send_message(chat_id, f"❌ Error uploading video: {str(e)}")
 
